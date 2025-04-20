@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Navbar from "./components/navbar/Navbar";
-import Footer from "./components/footer/Footer";
+import Footer from "./components/Footer/Footer";
 import HeroSection from "./components/home/HeroSection";
 import FeaturedCategories from "./components/home/FeaturedCategories";
 import BenefitsSection from "./components/home/BenefitsSection";
