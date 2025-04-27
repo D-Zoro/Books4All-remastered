@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Add this to your globals.css */
+.hero-canvas {
+  will-change: opacity;
+  opacity: var(--hero-bg-opacity, 1);
+  transition: opacity 0.2s ease-out;
+}

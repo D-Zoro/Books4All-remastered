@@ -4,8 +4,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Montserrat } from "next/font/google";
+import PropTypes from "prop-types";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
+
+// Navigation links configuration - defined once and reused
+const NAV_LINKS = [
+  { path: "/buy", label: "Buy" },
+  { path: "/sell", label: "Sell" },
+  { path: "/ai-support", label: "AI Support" },
+  { path: "/about", label: "About" }
+];
+
+// Style constants
+const STYLES = {
+  scrolled: "py-2 bg-gradient-to-r from-[#1a2a3a] to-[#2c3e50] shadow-lg",
+  notScrolled: "py-3 bg-gradient-to-b from-[#243447] to-[#1d2b3a] shadow-md",
+  highlight: "text-[#36d7b7]"
+};
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -14,23 +30,30 @@ const Navbar = () => {
   const mobileMenuRef = useRef(null);
   const toggleButtonRef = useRef(null);
 
-  // Debounced scroll listener
+  // Optimized scroll listener with true debounce
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
-    const debounce = setTimeout(handleScroll, 100);
+    let debounceTimer;
+    
+    const handleScroll = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        setScrolled(window.scrollY > 30);
+      }, 100);
+    };
 
     window.addEventListener("scroll", handleScroll);
     return () => {
-      clearTimeout(debounce);
+      clearTimeout(debounceTimer);
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
   // Close mobile menu when clicking outside
   useEffect(() => {
+    if (!mobileMenuOpen) return;
+    
     const handleClickOutside = (e) => {
       if (
-        mobileMenuOpen && 
         mobileMenuRef.current && 
         !mobileMenuRef.current.contains(e.target) && 
         toggleButtonRef.current && 
@@ -40,8 +63,16 @@ const Navbar = () => {
       }
     };
     
+    // Add listeners for mouse and keyboard accessibility
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setMobileMenuOpen(false);
+    });
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleClickOutside);
+    };
   }, [mobileMenuOpen]);
 
   const toggleMobileMenu = useCallback((e) => {
@@ -49,13 +80,16 @@ const Navbar = () => {
     setMobileMenuOpen((prev) => !prev);
   }, []);
 
+  // Close menu when route changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <div className={`fixed top-0 w-full z-50 ${montserrat.className}`}>
       <nav
         className={`transition-all duration-300 ease-in-out ${
-          scrolled
-            ? "py-2 bg-gradient-to-r from-[#1a2a3a] to-[#2c3e50] shadow-lg"
-            : "py-3 bg-gradient-to-b from-[#243447] to-[#1d2b3a] shadow-md"
+          scrolled ? STYLES.scrolled : STYLES.notScrolled
         }`}
       >
         <div className="w-full px-3 md:px-6 flex justify-between items-center">
@@ -73,16 +107,16 @@ const Navbar = () => {
                 />
               </div>
               <span className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight text-white">
-                Books<span className="text-[#36d7b7]">4</span>All
+                Books<span className={STYLES.highlight}>4</span>All
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation Links */}
           <div className="hidden lg:flex space-x-6 xl:space-x-8 items-center">
-            {["/buy", "/sell", "/ai-support", "/about"].map((link) => (
-              <NavLink key={link} href={link} isActive={pathname === link}>
-                {link.replace("/", "").charAt(0).toUpperCase() + link.slice(2)}
+            {NAV_LINKS.map(({ path, label }) => (
+              <NavLink key={path} href={path} isActive={pathname === path}>
+                {label}
               </NavLink>
             ))}
             
@@ -92,9 +126,7 @@ const Navbar = () => {
               className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
             >
               <span>Login</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-              </svg>
+              <LoginIcon />
             </Link>
           </div>
 
@@ -107,23 +139,7 @@ const Navbar = () => {
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
             >
-              <div className="w-7 flex flex-col gap-1.5">
-                <span
-                  className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
-                    mobileMenuOpen ? "rotate-45 translate-y-2" : ""
-                  }`}
-                ></span>
-                <span
-                  className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
-                    mobileMenuOpen ? "opacity-0" : "opacity-100"
-                  }`}
-                ></span>
-                <span
-                  className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
-                    mobileMenuOpen ? "-rotate-45 -translate-y-2" : ""
-                  }`}
-                ></span>
-              </div>
+              <HamburgerIcon isOpen={mobileMenuOpen} />
             </button>
           </div>
         </div>
@@ -136,13 +152,13 @@ const Navbar = () => {
           }`}
         >
           <div className="flex flex-col space-y-4 px-5 py-5 bg-[#1d2b3a] shadow-inner">
-            {["/buy", "/sell", "/ai-support", "/about"].map((link) => (
+            {NAV_LINKS.map(({ path, label }) => (
               <MobileNavLink
-                key={link}
-                href={link}
+                key={path}
+                href={path}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {link.replace("/", "").charAt(0).toUpperCase() + link.slice(2)}
+                {label}
               </MobileNavLink>
             ))}
 
@@ -153,9 +169,7 @@ const Navbar = () => {
                 className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
               >
                 <span>Login</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
-                </svg>
+                <LoginIcon className="h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -165,12 +179,39 @@ const Navbar = () => {
   );
 };
 
+// Extracted icon components for better organization
+const LoginIcon = ({ className = "h-4 w-4" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={`${className} transform group-hover:translate-x-1 transition-transform`} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+  </svg>
+);
+
+const HamburgerIcon = ({ isOpen }) => (
+  <div className="w-7 flex flex-col gap-1.5">
+    <span
+      className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
+        isOpen ? "rotate-45 translate-y-2" : ""
+      }`}
+    ></span>
+    <span
+      className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
+        isOpen ? "opacity-0" : "opacity-100"
+      }`}
+    ></span>
+    <span
+      className={`bg-white block h-0.5 w-full rounded transition-all duration-300 ${
+        isOpen ? "-rotate-45 -translate-y-2" : ""
+      }`}
+    ></span>
+  </div>
+);
+
 const NavLink = React.memo(({ href, children, isActive }) => {
   return (
     <Link
       href={href}
       className={`text-gray-100 font-semibold tracking-wide text-lg relative px-2 py-2 group transition-colors duration-300 ${
-        isActive ? "text-[#36d7b7]" : "hover:text-[#36d7b7]"
+        isActive ? STYLES.highlight : `hover:${STYLES.highlight}`
       }`}
     >
       {children}
@@ -183,6 +224,13 @@ const NavLink = React.memo(({ href, children, isActive }) => {
   );
 });
 
+NavLink.displayName = 'NavLink';
+NavLink.propTypes = {
+  href: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  isActive: PropTypes.bool.isRequired
+};
+
 const MobileNavLink = React.memo(({ href, children, onClick }) => {
   return (
     <Link
@@ -194,5 +242,20 @@ const MobileNavLink = React.memo(({ href, children, onClick }) => {
     </Link>
   );
 });
+
+MobileNavLink.displayName = 'MobileNavLink';
+MobileNavLink.propTypes = {
+  href: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  onClick: PropTypes.func.isRequired
+};
+
+LoginIcon.propTypes = {
+  className: PropTypes.string
+};
+
+HamburgerIcon.propTypes = {
+  isOpen: PropTypes.bool.isRequired
+};
 
 export default Navbar;
