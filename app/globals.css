@@ -30,3 +30,8 @@ body {
   opacity: var(--hero-bg-opacity, 1);
   transition: opacity 0.2s ease-out;
 }
+
+/* Add this to your globals.css */
+.bg-radial-gradient {
+  background: radial-gradient(circle at center, transparent 0%, rgba(13, 17, 23, 0.6) 80%);
+}

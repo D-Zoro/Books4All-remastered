@@ -55,15 +55,6 @@ const Footer = () => {
     }
   };
 
-  const waveVariants = {
-    initial: { pathLength: 0, pathOffset: 1 },
-    animate: { 
-      pathLength: 1, 
-      pathOffset: 0,
-      transition: { duration: 1.5, ease: "easeInOut" }
-    }
-  };
-  
   return (
     <footer className="bg-gradient-to-b from-[#0f172a] to-[#1e293b] text-gray-300 pt-6 sm:pt-10 pb-6 overflow-hidden">
       
