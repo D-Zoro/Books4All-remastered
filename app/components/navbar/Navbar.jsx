@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Montserrat } from "next/font/google";
 import PropTypes from "prop-types";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat" });
 
@@ -24,6 +25,7 @@ const STYLES = {
 };
 
 const Navbar = () => {
+  const { data: session } = useSession(); // Moved inside component
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -71,7 +73,9 @@ const Navbar = () => {
     
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleClickOutside);
+      document.removeEventListener("keydown", (e) => {
+        if (e.key === "Escape") setMobileMenuOpen(false);
+      });
     };
   }, [mobileMenuOpen]);
 
@@ -120,14 +124,26 @@ const Navbar = () => {
               </NavLink>
             ))}
             
-            {/* Login Link (Desktop) */}
-            <Link
-              href="/login"
-              className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
-            >
-              <span>Login</span>
-              <LoginIcon />
-            </Link>
+            {/* Login/Logout Link (Desktop) - Fixed syntax */}
+            {!session ? (
+              <Link
+                href="#"
+                onClick={() => signIn("google")}
+                className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
+              >
+                <span>Login</span>
+                <LoginIcon/>
+              </Link>
+            ) : (
+              <Link
+                href="#"
+                onClick={() => signOut()}
+                className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
+              >
+                <span>Sign Out</span>
+                <LogoutIcon className="h-4 w-4" />
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -163,14 +179,31 @@ const Navbar = () => {
             ))}
 
             <div className="pt-3 border-t border-gray-600/30">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
-              >
-                <span>Login</span>
-                <LoginIcon className="h-5 w-5" />
-              </Link>
+              {!session ? (
+                <Link
+                  href="#"
+                  onClick={() => {
+                    signIn("google");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
+                >
+                  <span>Login</span>
+                  <LoginIcon className="h-5 w-5" />
+                </Link>
+              ) : (
+                <Link
+                  href="#"
+                  onClick={() => {
+                    signOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
+                >
+                  <span>Sign Out</span>
+                  <LogoutIcon className="h-5 w-5" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -181,6 +214,13 @@ const Navbar = () => {
 
 // Extracted icon components for better organization
 const LoginIcon = ({ className = "h-4 w-4" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" className={`${className} transform group-hover:translate-x-1 transition-transform`} viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+  </svg>
+);
+
+// Added a LogoutIcon component
+const LogoutIcon = ({ className = "h-4 w-4" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" className={`${className} transform group-hover:translate-x-1 transition-transform`} viewBox="0 0 20 20" fill="currentColor">
     <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
   </svg>
@@ -251,6 +291,10 @@ MobileNavLink.propTypes = {
 };
 
 LoginIcon.propTypes = {
+  className: PropTypes.string
+};
+
+LogoutIcon.propTypes = {
   className: PropTypes.string
 };
 
