@@ -8,6 +8,7 @@ import BenefitsSection from "./components/home/BenefitsSection";
 import TestimonialsSection from "./components/home/TestimonialsSection";
 import CtaSection from "./components/home/CtaSection";
 
+
 export default function Home() {
   // Scroll progress for animations
   const [scrollProgress, setScrollProgress] = useState(0);
