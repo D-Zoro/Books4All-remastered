@@ -127,8 +127,7 @@ const Navbar = () => {
             {/* Login/Logout Link (Desktop) - Fixed syntax */}
             {!session ? (
               <Link
-                href="#"
-                onClick={() => signIn("google")}
+                href="/auth/login"
                 className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
               >
                 <span>Login</span>
