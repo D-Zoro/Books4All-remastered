@@ -43,6 +43,9 @@ const Navbar = () => {
       }, 100);
     };
 
+    // Initial check when component mounts
+    setScrolled(window.scrollY > 30);
+    
     window.addEventListener("scroll", handleScroll);
     return () => {
       clearTimeout(debounceTimer);
@@ -71,11 +74,15 @@ const Navbar = () => {
       if (e.key === "Escape") setMobileMenuOpen(false);
     });
     
+    // Prevent background scrolling when menu is open
+    document.body.style.overflow = "hidden";
+    
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", (e) => {
         if (e.key === "Escape") setMobileMenuOpen(false);
       });
+      document.body.style.overflow = "";
     };
   }, [mobileMenuOpen]);
 
@@ -124,7 +131,7 @@ const Navbar = () => {
               </NavLink>
             ))}
             
-            {/* Login/Logout Link (Desktop) - Fixed syntax */}
+            {/* Login/Logout Link (Desktop) */}
             {!session ? (
               <Link
                 href="/auth/login"
@@ -134,14 +141,26 @@ const Navbar = () => {
                 <LoginIcon/>
               </Link>
             ) : (
-              <Link
-                href="#"
-                onClick={() => signOut()}
-                className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group ml-2"
-              >
-                <span>Sign Out</span>
-                <LogoutIcon className="h-4 w-4" />
-              </Link>
+              <div className="flex items-center gap-3">
+                {/* {session.user?.image && (
+                  <div className="relative h-8 w-8 overflow-hidden rounded-full border-2 border-[#36d7b7]">
+                    <Image
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )} */}
+                <Link
+                  href="#"
+                  onClick={() => signOut()}
+                  className="text-white font-semibold text-lg hover:text-[#36d7b7] transition-all duration-300 flex items-center gap-1.5 group"
+                >
+                  <span>Sign Out</span>
+                  <LogoutIcon />
+                </Link>
+              </div>
             )}
           </div>
 
@@ -150,7 +169,7 @@ const Navbar = () => {
             <button
               ref={toggleButtonRef}
               onClick={toggleMobileMenu}
-              className="text-white p-2 focus:outline-none"
+              className="text-white p-2 focus:outline-none focus:ring-2 focus:ring-[#36d7b7] rounded-md"
               aria-label="Toggle menu"
               aria-expanded={mobileMenuOpen}
             >
@@ -159,49 +178,82 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu Dropdown - FIXED */}
         <div
           ref={mobileMenuRef}
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? "max-h-72 opacity-100" : "max-h-0 opacity-0"
+          className={`lg:hidden fixed inset-x-0 top-[${scrolled ? '56px' : '64px'}] bg-[#1d2b3a] shadow-lg transition-all duration-300 ease-in-out ${
+            mobileMenuOpen 
+              ? "opacity-100 translate-y-0" 
+              : "opacity-0 -translate-y-4 pointer-events-none"
           }`}
+          style={{ 
+            maxHeight: mobileMenuOpen ? 'calc(100vh - 64px)' : '0',
+            overflow: mobileMenuOpen ? 'auto' : 'hidden'
+          }}
         >
-          <div className="flex flex-col space-y-4 px-5 py-5 bg-[#1d2b3a] shadow-inner">
-            {NAV_LINKS.map(({ path, label }) => (
-              <MobileNavLink
-                key={path}
-                href={path}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {label}
-              </MobileNavLink>
-            ))}
+          <div className="flex flex-col space-y-4 px-5 py-6 divide-y divide-gray-600/30">
+            {/* Navigation links */}
+            <div className="space-y-4 pb-4">
+              {NAV_LINKS.map(({ path, label }) => (
+                <MobileNavLink
+                  key={path}
+                  href={path}
+                  isActive={pathname === path}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {label}
+                </MobileNavLink>
+              ))}
+            </div>
 
-            <div className="pt-3 border-t border-gray-600/30">
+            {/* Login/User section - FIXED */}
+            <div className="pt-4">
               {!session ? (
                 <Link
-                  href="#"
-                  onClick={() => {
-                    signIn("google");
-                    setMobileMenuOpen(false);
-                  }}
+                  href="/auth/login"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
                 >
                   <span>Login</span>
                   <LoginIcon className="h-5 w-5" />
                 </Link>
               ) : (
-                <Link
-                  href="#"
-                  onClick={() => {
-                    signOut();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
-                >
-                  <span>Sign Out</span>
-                  <LogoutIcon className="h-5 w-5" />
-                </Link>
+                <div className="space-y-4">
+                  {/* User info */}
+                  <div className="flex items-center gap-3 py-2">
+                    {/* {session.user?.image && (
+                      <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-[#36d7b7]">
+                        <Image
+                          src={session.user.image}
+                          alt={session.user.name || "User"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )} */}
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium text-sm">
+                        {session.user?.name || session.user?.email}
+                      </span>
+                      <span className="text-gray-400 text-xs truncate max-w-[200px]">
+                        {session.user?.email}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Sign out button */}
+                  <Link
+                    href="#"
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2 text-white font-semibold text-xl py-3 hover:text-[#36d7b7] transition-colors duration-200"
+                  >
+                    <span>Sign Out</span>
+                    <LogoutIcon className="h-5 w-5" />
+                  </Link>
+                </div>
               )}
             </div>
           </div>
@@ -270,12 +322,14 @@ NavLink.propTypes = {
   isActive: PropTypes.bool.isRequired
 };
 
-const MobileNavLink = React.memo(({ href, children, onClick }) => {
+const MobileNavLink = React.memo(({ href, children, onClick, isActive }) => {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="text-gray-100 text-xl font-medium py-2 border-b border-gray-600/30 hover:text-[#36d7b7] transition-colors duration-200"
+      className={`block text-gray-100 text-xl font-medium py-3 hover:text-[#36d7b7] transition-colors duration-200 ${
+        isActive ? "text-[#36d7b7]" : ""
+      }`}
     >
       {children}
     </Link>
@@ -286,7 +340,8 @@ MobileNavLink.displayName = 'MobileNavLink';
 MobileNavLink.propTypes = {
   href: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
-  onClick: PropTypes.func.isRequired
+  onClick: PropTypes.func.isRequired,
+  isActive: PropTypes.bool
 };
 
 LoginIcon.propTypes = {
